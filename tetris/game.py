@@ -23,17 +23,10 @@ class StackedPieces:
         return i in self.stacked_pieces
 
     def break_line(self):
-        if all(pixel in self.stacked_pieces for pixel in [i for i in range(self.size - self.cols, self.size)]):
+        while all(pixel in self.stacked_pieces for pixel in [i for i in range(self.size - self.cols, self.size)]):
             self.stacked_pieces = set(self.stacked_pieces - set(range(self.size - self.cols, self.size)))
             self.stacked_pieces = set([pixel + self.cols for pixel in self.stacked_pieces])
-        else:
-            print("last line not stacked")
 
-    def display(self):
-        print("***Stacked***")
-        for i in self.stacked_pieces:
-            print(i, "", sep=" ", end="")
-        print()
 
 class Piece:
 
@@ -70,11 +63,6 @@ class Piece:
         if not self.floor:
             self.down()
 
-    def drop(self):
-        while not self.floor:
-            self.down()
-
-
     def can_go_left(self, pixels):
         for i in pixels:
             if i % self.cols == 0 or i - 1 in self.stack.stacked_pieces:
@@ -92,7 +80,6 @@ class Piece:
             if i % self.cols == self.cols - 1 or i + 1 in self.stack.stacked_pieces:
                 return False
         return True
-
 
     def right(self):
         for pixels in self.data:
@@ -117,7 +104,6 @@ class Piece:
             if i == self.rows:
                 return True
 
-        #print(col_hash)
         return False
 
 
@@ -132,7 +118,6 @@ def display(piece, stack, show):
         if (pixel + 1) % piece.cols == 0:
             print()
             space = False
-
     print()
 
 def get_dimenssions():
@@ -180,11 +165,6 @@ def main():
             piece.left()
         elif instruction == "right":
             piece.right()
-        elif instruction == "drop" or instruction == "d":
-            piece.drop()
-            stack.add(piece)
-            piece = Piece([[]], cols, rows, stack)
-            piece.stacked = True
         elif instruction == "break":
             if piece.stacked:
                 piece = Piece([[]], cols, rows, stack)
