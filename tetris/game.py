@@ -6,7 +6,7 @@ L = [[4, 14, 24, 25], [5, 15, 14, 13], [4, 5, 15, 25], [6, 5, 4, 14]]
 J = [[5, 15, 25, 24], [15, 5, 4, 3], [5, 4, 14, 24], [4, 14, 15, 16]]
 T = [[4, 14, 24, 15], [4, 13, 14, 15], [5, 15, 25, 14], [4, 5, 6, 15]]
 
-class Array:
+class Piece:
 
     def __init__(self, data, cols, rows):
         self.index = 0
@@ -19,12 +19,12 @@ class Array:
     def display(self, show):
         print()
         space = False
-        for i in range(0, self.size):
+        for pixel in range(0, self.size):
             if space:
                 print(" ", end="")
-            print("0" if show and i in self.data[self.index] else "-", sep=" ", end="")
+            print("0" if show and pixel in self.data[self.index] else "-", end="")
             space = True
-            if (i + 1) % self.cols == 0:
+            if (pixel + 1) % self.cols == 0:
                 print()
                 space = False
 
@@ -35,47 +35,49 @@ class Array:
                 self.floor = True
 
     def down(self):
-        for piece in self.data:
-            for i in range(len(piece)):
-                piece[i] = piece[i] + self.cols
-                if piece[i] > self.size:
-                    piece[i] %= self.size
+        for pixels in self.data:
+            for i in range(len(pixels)):
+                pixels[i] = pixels[i] + self.cols
+                if pixels[i] > self.size:
+                    pixels[i] %= self.size
         self.check_floor()
 
     def rotate(self):
-        self.down()
         if not self.floor:
             self.index = (self.index + 1) % len(self.data)
+        self.check_floor()
+        if not self.floor:
+            self.down()
 
 
-    def can_go_left(self, piece):
-        for i in piece:
+    def can_go_left(self, pixels):
+        for i in pixels:
             if i % self.cols == 0:
                 return False
         return True
 
     def left(self):
-        for piece in self.data:
-            if self.can_go_left(piece):
-                self.move(piece, -1)
+        for pixels in self.data:
+            if self.can_go_left(pixels):
+                self.move(pixels, -1)
         self.down()
 
-    def can_go_right(self, piece):
-        for i in piece:
+    def can_go_right(self, pixels):
+        for i in pixels:
             if i % self.cols == self.cols - 1:
                 return False
         return True
 
 
     def right(self):
-        for piece in self.data:
-            if(self.can_go_right(piece)):
-                self.move(piece, 1)
+        for pixels in self.data:
+            if(self.can_go_right(pixels)):
+                self.move(pixels, 1)
         self.down()
 
-    def move(self, piece, index):
-        for i in range(len(piece)):
-            piece[i] = piece[i] + index
+    def move(self, pixels, index):
+        for i in range(len(pixels)):
+            pixels[i] = pixels[i] + index
 
 def get_dimenssions():
     while True:
@@ -89,25 +91,25 @@ def get_dimenssions():
 
 def main():
     switcher = {"T": T, "J": J, "L": L, "O": O, "I": I, "S": S, "Z": Z}
-    piece = switcher.get(input(), [[]])
+    choice = switcher.get(input(), [[]])
     cols, rows = get_dimenssions()
-    array = Array(piece, cols, rows)
-    array.display(False)
-    array.display(True)
+    piece = Piece(choice, cols, rows)
+    piece.display(False)
+    piece.display(True)
 
     while True:
         instruction = input()
         if instruction == "exit":
             break
-        elif not array.floor and instruction == "rotate":
-            array.rotate()
-        elif not array.floor and instruction == "left":
-            array.left()
-        elif not array.floor and instruction == "right":
-            array.right()
-        elif not array.floor:
-            array.down()
-        array.display(True)
+        elif not piece.floor and instruction == "rotate":
+            piece.rotate()
+        elif not piece.floor and instruction == "left":
+            piece.left()
+        elif not piece.floor and instruction == "right":
+            piece.right()
+        elif not piece.floor:
+            piece.down()
+        piece.display(True)
 
 if __name__ == "__main__":
     main()
