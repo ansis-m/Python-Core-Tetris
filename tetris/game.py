@@ -50,8 +50,9 @@ class Piece:
 
     def check_floor(self):
         for i in self.data[self.index]:
-            if i >= self.size - self.cols:
+            if i >= self.size - self.cols or i + self.cols in self.stack.stacked_pieces:
                 self.floor = True
+                return
 
     def down(self):
         if not self.stacked:
@@ -69,10 +70,14 @@ class Piece:
         if not self.floor:
             self.down()
 
+    def drop(self):
+        while not self.floor:
+            self.down()
+
 
     def can_go_left(self, pixels):
         for i in pixels:
-            if i % self.cols == 0:
+            if i % self.cols == 0 or i - 1 in self.stack.stacked_pieces:
                 return False
         return True
 
@@ -84,7 +89,7 @@ class Piece:
 
     def can_go_right(self, pixels):
         for i in pixels:
-            if i % self.cols == self.cols - 1:
+            if i % self.cols == self.cols - 1 or i + 1 in self.stack.stacked_pieces:
                 return False
         return True
 
@@ -99,17 +104,36 @@ class Piece:
         for i in range(len(pixels)):
             pixels[i] = pixels[i] + index
 
+    def game_over(self):
+        col_hash = [0 for i in range(0, self.cols)]
+        if not self.stacked:
+            for i in self.data[self.index]:
+                col_hash[i % self.cols] += 1
+
+        for i in self.stack.stacked_pieces:
+            col_hash[i % self.cols] += 1
+
+        for i in col_hash:
+            if i == self.rows:
+                return True
+
+        #print(col_hash)
+        return False
+
+
 def display(piece, stack, show):
-    print()
+
     space = False
     for pixel in range(0, piece.size):
         if space:
-            print("\t", end="")
-        print(pixel if show and (pixel in piece.data[piece.index] or stack.in_stack(pixel)) else "-", end="")
+            print(" ", end="")
+        print("0" if show and (pixel in piece.data[piece.index] or stack.in_stack(pixel)) else "-", end="")
         space = True
         if (pixel + 1) % piece.cols == 0:
             print()
             space = False
+
+    print()
 
 def get_dimenssions():
     while True:
@@ -123,35 +147,44 @@ def get_dimenssions():
 
 def main():
     switcher = {"T": T, "J": J, "L": L, "O": O, "I": I, "S": S, "Z": Z}
-    choice = switcher.get(input(), [[]])
     cols, rows = get_dimenssions()
     stack = StackedPieces(cols, rows)
-    piece = Piece(copy.deepcopy(choice), cols, rows, stack)
+    piece = Piece([[]], cols, rows, stack)
+    piece.stacked = True
     display(piece, stack, False)
-    display(piece, stack, True)
+
 
     while True:
         instruction = input()
-        if instruction == "exit":
-            break
+        piece.check_floor()
         if piece.floor:
             if not piece.stacked:
                 stack.add(piece)
+                piece = Piece([[]], cols, rows, stack)
                 piece.stacked = True
+        if piece.game_over():
+            display(piece, stack, True)
+            print("\nGame Over!")
+            break
+        if instruction == "exit":
+            break
         if instruction == "piece":
             if not piece.stacked:
                 print("previous piece has not been stacked")
             else:
                 new_choice = switcher.get(input(), [[]])
                 piece = Piece(copy.deepcopy(new_choice), cols, rows, stack)
-                print("new piece")
-                print(piece.data[piece.index])
         elif instruction == "rotate":
             piece.rotate()
         elif instruction == "left":
             piece.left()
         elif instruction == "right":
             piece.right()
+        elif instruction == "drop" or instruction == "d":
+            piece.drop()
+            stack.add(piece)
+            piece = Piece([[]], cols, rows, stack)
+            piece.stacked = True
         elif instruction == "break":
             if piece.stacked:
                 piece = Piece([[]], cols, rows, stack)
@@ -162,7 +195,6 @@ def main():
         else:
             piece.down()
         display(piece, stack, True)
-        stack.display()
 
 if __name__ == "__main__":
     main()
