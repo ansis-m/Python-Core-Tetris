@@ -18,14 +18,11 @@ class StackedPieces:
 
     def add(self, piece):
         self.stacked_pieces.update(piece.data[piece.index])
-        print("**ADDITION EVENT**")
-        self.display()
 
-    def in_stacked(self, i):
+    def in_stack(self, i):
         return i in self.stacked_pieces
 
     def break_line(self):
-        print([i for i in range(self.size - self.cols, self.size)])
         if all(pixel in self.stacked_pieces for pixel in [i for i in range(self.size - self.cols, self.size)]):
             self.stacked_pieces = set(self.stacked_pieces - set(range(self.size - self.cols, self.size)))
             self.stacked_pieces = set([pixel + self.cols for pixel in self.stacked_pieces])
@@ -40,13 +37,13 @@ class StackedPieces:
 
 class Piece:
 
-    def __init__(self, new_data, cols, rows):
+    def __init__(self, data, cols, rows, stack):
         self.index = 0
-        self.data = list()
-        self.data += new_data
+        self.data = data
         self.cols = cols
         self.rows = rows
         self.size = cols * rows
+        self.stack = stack
         self.floor = False
         self.stacked = False
 
@@ -102,13 +99,13 @@ class Piece:
         for i in range(len(pixels)):
             pixels[i] = pixels[i] + index
 
-def display(piece, stacked, show):
+def display(piece, stack, show):
     print()
     space = False
     for pixel in range(0, piece.size):
         if space:
             print("\t", end="")
-        print(pixel if show and (pixel in piece.data[piece.index] or stacked.in_stacked(pixel)) else "-", end="")
+        print(pixel if show and (pixel in piece.data[piece.index] or stack.in_stack(pixel)) else "-", end="")
         space = True
         if (pixel + 1) % piece.cols == 0:
             print()
@@ -128,10 +125,10 @@ def main():
     switcher = {"T": T, "J": J, "L": L, "O": O, "I": I, "S": S, "Z": Z}
     choice = switcher.get(input(), [[]])
     cols, rows = get_dimenssions()
-    piece = Piece(copy.deepcopy(choice), cols, rows)
-    stacked = StackedPieces(cols, rows)
-    display(piece, stacked, False)
-    display(piece, stacked, True)
+    stack = StackedPieces(cols, rows)
+    piece = Piece(copy.deepcopy(choice), cols, rows, stack)
+    display(piece, stack, False)
+    display(piece, stack, True)
 
     while True:
         instruction = input()
@@ -139,15 +136,14 @@ def main():
             break
         if piece.floor:
             if not piece.stacked:
-                stacked.add(piece)
+                stack.add(piece)
                 piece.stacked = True
         if instruction == "piece":
             if not piece.stacked:
                 print("previous piece has not been stacked")
             else:
                 new_choice = switcher.get(input(), [[]])
-                piece = Piece(copy.deepcopy(new_choice), cols, rows)
-                piece.stacked = True
+                piece = Piece(copy.deepcopy(new_choice), cols, rows, stack)
                 print("new piece")
                 print(piece.data[piece.index])
         elif instruction == "rotate":
@@ -157,12 +153,16 @@ def main():
         elif instruction == "right":
             piece.right()
         elif instruction == "break":
-            piece = Piece([[]], cols, rows)
-            stacked.break_line()
+            if piece.stacked:
+                piece = Piece([[]], cols, rows, stack)
+                piece.stacked = True
+                stack.break_line()
+            else:
+                print("Piece not stacked!!!")
         else:
             piece.down()
-        display(piece, stacked, True)
-        stacked.display()
+        display(piece, stack, True)
+        stack.display()
 
 if __name__ == "__main__":
     main()
