@@ -14,12 +14,25 @@ class Array:
         self.cols = cols
         self.rows = rows
         self.size = cols * rows
+        self.floor = False
 
     def display(self, show):
         print()
+        space = False
         for i in range(0, self.size):
-            print("0" if show and i in self.data[self.index] else "-", "", sep=" ", end="")
-            print("\n" if (i + 1) % self.cols == 0 else "", end="")
+            if space:
+                print(" ", end="")
+            print("0" if show and i in self.data[self.index] else "-", sep=" ", end="")
+            space = True
+            if (i + 1) % self.cols == 0:
+                print()
+                space = False
+
+
+    def check_floor(self):
+        for i in self.data[self.index]:
+            if i >= self.size - self.cols:
+                self.floor = True
 
     def down(self):
         for piece in self.data:
@@ -27,31 +40,42 @@ class Array:
                 piece[i] = piece[i] + self.cols
                 if piece[i] > self.size:
                     piece[i] %= self.size
+        self.check_floor()
 
     def rotate(self):
         self.down()
-        self.index = (self.index + 1) % len(self.data)
+        if not self.floor:
+            self.index = (self.index + 1) % len(self.data)
+
+
+    def can_go_left(self, piece):
+        for i in piece:
+            if i % self.cols == 0:
+                return False
+        return True
 
     def left(self):
-        self.move(left=True)
+        for piece in self.data:
+            if self.can_go_left(piece):
+                self.move(piece, -1)
+        self.down()
+
+    def can_go_right(self, piece):
+        for i in piece:
+            if i % self.cols == self.cols - 1:
+                return False
+        return True
+
 
     def right(self):
-        self.move(left=False)
-
-    def move(self, left):
-        self.down()
         for piece in self.data:
-            for i in range(len(piece)):
-                if not left:
-                    if piece[i] % self.cols == 0:
-                        piece[i] = piece[i] + 1 - self.cols
-                    else:
-                        piece[i] = piece[i] + 1
-                elif left:
-                    if piece[i] % self.cols == 1:
-                        piece[i] = piece[i] + self.cols - 1
-                    else:
-                        piece[i] = piece[i] - 1
+            if(self.can_go_right(piece)):
+                self.move(piece, 1)
+        self.down()
+
+    def move(self, piece, index):
+        for i in range(len(piece)):
+            piece[i] = piece[i] + index
 
 def get_dimenssions():
     while True:
@@ -75,13 +99,13 @@ def main():
         instruction = input()
         if instruction == "exit":
             break
-        elif instruction == "rotate":
+        elif not array.floor and instruction == "rotate":
             array.rotate()
-        elif instruction == "left":
+        elif not array.floor and instruction == "left":
             array.left()
-        elif instruction == "right":
+        elif not array.floor and instruction == "right":
             array.right()
-        else:
+        elif not array.floor:
             array.down()
         array.display(True)
 
