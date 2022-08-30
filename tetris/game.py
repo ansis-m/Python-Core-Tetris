@@ -6,6 +6,28 @@ L = [[4, 14, 24, 25], [5, 15, 14, 13], [4, 5, 15, 25], [6, 5, 4, 14]]
 J = [[5, 15, 25, 24], [15, 5, 4, 3], [5, 4, 14, 24], [4, 14, 15, 16]]
 T = [[4, 14, 24, 15], [4, 13, 14, 15], [5, 15, 25, 14], [4, 5, 6, 15]]
 
+
+class StackedPieces:
+
+    def __init__(self, cols, rows):
+        self.stacked_pieces = []
+        self.cols = cols
+        self.size = cols * rows
+
+    def add(self, piece):
+        self.stacked_pieces.append(piece)
+        print(self.stacked_pieces)
+
+    def in_stacked(self, i):
+        return i in self.stacked_pieces
+
+    def break_line(self):
+        if all(pixel in self.stacked_pieces for pixel in [range(size - cols, size)]):
+            self.stacked_pieces = list(set(self.stacked_pieces) - set(range(size - cols, size)))
+            self.stacked_pieces = [pixel + self.cols for pixel in self.stacked_pieces]
+        else:
+            print("last line not stacked")
+
 class Piece:
 
     def __init__(self, data, cols, rows):
@@ -15,18 +37,6 @@ class Piece:
         self.rows = rows
         self.size = cols * rows
         self.floor = False
-
-    def display(self, show):
-        print()
-        space = False
-        for pixel in range(0, self.size):
-            if space:
-                print(" ", end="")
-            print("0" if show and pixel in self.data[self.index] else "-", end="")
-            space = True
-            if (pixel + 1) % self.cols == 0:
-                print()
-                space = False
 
 
     def check_floor(self):
@@ -79,6 +89,18 @@ class Piece:
         for i in range(len(pixels)):
             pixels[i] = pixels[i] + index
 
+def display(piece, show):
+    print()
+    space = False
+    for pixel in range(0, piece.size):
+        if space:
+            print(" ", end="")
+        print("0" if show and pixel in piece.data[piece.index] else "-", end="")
+        space = True
+        if (pixel + 1) % piece.cols == 0:
+            print()
+            space = False
+
 def get_dimenssions():
     while True:
         try:
@@ -94,22 +116,25 @@ def main():
     choice = switcher.get(input(), [[]])
     cols, rows = get_dimenssions()
     piece = Piece(choice, cols, rows)
-    piece.display(False)
-    piece.display(True)
+    stacked = StackedPieces(cols, rows)
+    display(piece, False)
+    display(piece, True)
 
     while True:
         instruction = input()
         if instruction == "exit":
             break
-        elif not piece.floor and instruction == "rotate":
+        if piece.floor:
+            stacked.add(piece)
+        elif instruction == "rotate":
             piece.rotate()
-        elif not piece.floor and instruction == "left":
+        elif instruction == "left":
             piece.left()
-        elif not piece.floor and instruction == "right":
+        elif instruction == "right":
             piece.right()
-        elif not piece.floor:
+        else:
             piece.down()
-        piece.display(True)
+        display(piece, True)
 
 if __name__ == "__main__":
     main()
